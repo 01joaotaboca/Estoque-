@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque - Agro na Palma da Mão</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1b5e20, #4caf50);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        h1 { font-size: 32px; margin-bottom: 5px; }
+        p { font-size: 14px; opacity: 0.9; margin-bottom: 25px; }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 85%;
+            max-width: 320px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            background: white;
+            color: #1b5e20;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:active { transform: scale(0.95); background: #e8f5e9; }
+
+        /* Estilo do Modal (Formulário e Lista) */
+        .modal {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            color: #333;
+            padding: 20px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: left;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 { color: #1b5e20; margin-top: 0; font-size: 22px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        label { font-weight: bold; font-size: 14px; color: #555; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .btn-salvar { background: #1b5e20; color: white; width: 100%; margin-top: 10px; }
+        .btn-fechar { background: #f5f5f5; color: #666; width: 100%; margin-top: 8px; border: 1px solid #ddd; }
+
+        /* Lista de Produtos */
+        .lista-itens { margin-top: 15px; }
+        .item-card {
+            background: #f9f9f9;
+            border-left: 5px solid #4caf50;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item-info b { color: #1b5e20; display: block; }
+        .btn-deletar { background: #ffebee; color: #c62828; padding: 5px 10px; border-radius: 5px; font-size: 12px; }
+
+        footer {
+            position: fixed;
+            bottom: 10px;
+            font-size: 11px;
+            opacity: 0.8;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" id="tela-inicial">
+        <h1>📦 Estoque</h1>
+        <p>Controle simples e rápido dos seus produtos</p>
+
+        <div class="menu">
+            <button onclick="abrirModal('modalCadastro')">
+                ➕ Cadastrar Produto
+            </button>
+
+            <button onclick="abrirModal('modalLista'); listarProdutos();">
+                📋 Ver Estoque
+            </button>
+
+            <button onclick="alert('Relatórios em breve!')">
+                📊 Relatórios
+            </button>
+        </div>
+    </div>
+
+    <div id="modalCadastro" class="modal">
+        <div class="modal-content">
+            <h2>Novo Produto</h2>
+            
+            <label>Nome do Produto:</label>
+            <input type="text" id="nome" placeholder="Ex: Milho, Adubo, Semente...">
+
+            <label>Origem / Depósito:</label>
+            <input type="text" id="origem" placeholder="Onde o produto está?">
+
+            <label>Quantidade:</label>
+            <input type="number" id="qtd" placeholder="0">
+
+            <button class="btn-salvar" onclick="salvarProduto()">Salvar no Dispositivo</button>
+            <button class="btn-fechar" onclick="fecharModal('modalCadastro')">Voltar</button>
+        </div>
+    </div>
+
+    <div id="modalLista" class="modal">
+        <div class="modal-content">
+            <h2>Produtos em Estoque</h2>
+            <div id="listaContainer" class="lista-itens">
+                </div>
+            <button class="btn-fechar" onclick="fecharModal('modalLista')">Fechar</button>
+        </div>
+    </div>
+
+    <footer>
+        Desenvolvido por João Divino Barbosa
+    </footer>
+
+    <script>
+        // Funções de Interface
+        function abrirModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function fecharModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Lógica de Dados (LocalStorage)
+        function salvarProduto() {
+            const nome = document.getElementById('nome').value;
+            const origem = document.getElementById('origem').value;
+            const qtd = document.getElementById('qtd').value;
+
+            if (!nome || !qtd) {
+                alert("Por favor, preencha o nome e a quantidade.");
+                return;
+            }
+
+            const novoProduto = {
+                id: Date.now(),
+                nome: nome,
+                origem: origem || "Não informada",
+                qtd: qtd
+            };
+
+            // Puxa o que já existe ou cria lista vazia
+            let estoque = JSON.parse(localStorage.getItem('meuEstoque')) || [];
+            estoque.push(novoProduto);
+            
+            // Salva de volta no celular
+            localStorage.setItem('meuEstoque', JSON.stringify(estoque));
+
+            alert("Produto registrado com sucesso!");
+            
+            // Limpa os campos e fecha
+            document.getElementById('nome').value = '';
+            document.getElementById('origem').value = '';
+            document.getElementById('qtd').value = '';
+            fecharModal('modalCadastro');
+        }
+
+        function listarProdutos() {
+            const container = document.getElementById('listaContainer');
+            const estoque = JSON.parse(localStorage.getItem('meuEstoque')) || [];
+            
+            if (estoque.length === 0) {
+                container.innerHTML = "<p style='color: #999'>Nenhum produto cadastrado.</p>";
+                return;
+            }
+
+            container.innerHTML = ""; // Limpa a lista antes de carregar
+            
+            estoque.forEach(item => {
+                const card = `
+                    <div class="item-card">
+                        <div class="item-info">
+                            <b>${item.nome}</b>
+                            <small>${item.origem} | Qtd: ${item.qtd}</small>
+                        </div>
+                        <button class="btn-deletar" onclick="removerProduto(${item.id})">Apagar</button>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        function removerProduto(id) {
+            if (confirm("Deseja remover este item?")) {
+                let estoque = JSON.parse(localStorage.getItem('meuEstoque')) || [];
+                estoque = estoque.filter(item => item.id !== id);
+                localStorage.setItem('meuEstoque', JSON.stringify(estoque));
+                listarProdutos(); // Atualiza a lista na tela
+            }
+        }
+    </script>
+
+</body>
+</html>
